@@ -1,0 +1,94 @@
+Spotify Dataset SQL Analysis Cheat Sheet
+========================================
+1. Listening Behavior & Popularity Trends
+-----------------------------------------
+A. Trending Over Time
+SELECT most_playedon, COUNT(*) AS Songs_Played
+FROM spotify_data
+GROUP BY most_playedon
+ORDER BY most_playedon;
+B. Hidden Gems: High Likes, Low Views
+SELECT Track, Artist, Views, Likes, ROUND(Likes/Views * 100, 2) AS Like_to_View_Percentage
+FROM spotify_data
+WHERE Views > 1000
+ORDER BY Like_to_View_Percentage DESC
+LIMIT 10;
+C. Engagement by Comments
+SELECT Track, Artist, Views, Comments,
+ ROUND(Comments / Views * 100, 2) AS Comment_Engagement
+FROM spotify_data
+WHERE Views > 10000
+ORDER BY Comment_Engagement DESC
+LIMIT 10;
+2. Audio Feature Analysis
+-------------------------
+A. Most Danceable Tracks
+SELECT Track, Artist, Danceability
+FROM spotify_data
+ORDER BY Danceability DESC
+LIMIT 10;
+B. Party Tracks: High Energy, Low Acousticness
+SELECT Track, Artist, Energy, Acousticness
+FROM spotify_data
+WHERE Energy > 0.8 AND Acousticness < 0.3
+ORDER BY Energy DESC
+LIMIT 10;
+C. Instrumental vs Vocal
+SELECT
+ CASE
+ WHEN Instrumentalness > 0.7 THEN 'Instrumental'
+ ELSE 'Vocal'
+ END AS Track_Type,
+ COUNT(*) AS Count
+FROM spotify_data
+GROUP BY Track_Type;
+3. Channel/Platform Insights
+----------------------------
+A. Channels with High Engagement
+SELECT Channel,
+ ROUND(SUM(Likes) / SUM(Views), 4) AS Avg_Engagement_Rate,
+ COUNT(*) AS Track_Count
+FROM spotify_data
+WHERE Views > 0
+GROUP BY Channel
+HAVING Track_Count > 5
+ORDER BY Avg_Engagement_Rate DESC
+LIMIT 10;
+B. Percentage of Official Videos
+SELECT
+ COUNT(CASE WHEN official_video = 'TRUE' THEN 1 END) * 100.0 / COUNT(*) AS Official_Video_Percentage
+FROM spotify_data;
+4. Song Structure and Duration Insights
+--------------------------------------
+A. Avg Duration by Album Type
+SELECT Album_type, ROUND(AVG(Duration_min), 2) AS Avg_Duration
+FROM spotify_data
+GROUP BY Album_type
+ORDER BY Avg_Duration DESC;
+B. Extreme Duration Songs
+SELECT Track, Artist, Duration_min
+FROM spotify_data
+WHERE Duration_min < 1 OR Duration_min > 10
+ORDER BY Duration_min;
+5. Composite Metrics & Custom Scores
+------------------------------------
+A. Engagement Score (Likes + Comments per 1k Views)
+SELECT Track, Artist, Views, Likes, Comments,
+ ROUND(((Likes + Comments) / Views) * 1000, 2) AS Engagement_Score
+FROM spotify_data
+WHERE Views > 1000
+ORDER BY Engagement_Score DESC
+LIMIT 10;
+B. Mood-Based Playlist Score
+SELECT Track, Artist, Valence, Tempo,
+ ROUND((Valence + (Tempo / 200)) / 2, 2) AS Mood_Score
+FROM spotify_data
+ORDER BY Mood_Score DESC
+LIMIT 10;
+Bonus Insights
+--------------
+- Artists with High Avg Energy: GROUP BY Artist HAVING AVG(Energy) > 0.8
+- Acoustic Songs Licensed: WHERE Acousticness > 0.7 AND Licensed = 'TRUE'
+- Duration vs Popularity: Correlation using BI or SQL groupings
+- Overproduced Songs: WHERE Loudness > -5
+- Features of Viral Tracks: Compare Valence, Tempo, Energy in top 10% by Views
